@@ -7,12 +7,12 @@ Live here: https://andrewmorris.io/2048.
 As you start playing, you'll notice that your moves are displayed in the url hash. This makes your game state and its history shareable ([usually](#url-hash-format)). Your mission is to produce a url with the highest score you can find.
 
 # Headless Version
-Since you are a developer, you will likely desire to separate your algorithmic number crunching domination from the fancy schmancy graphical frontend I have provided. Fear not my friend, simply add `"voltrevo-2048": "voltrevo/2048"` to your `package.json` and access the `Board` factory via:
+Since you are a developer, you will likely desire to separate your algorithmic number crunching domination from the fancy schmancy graphical frontend I have provided. Fear not my friend, simply add `"cr-2048"` to your `package.json` and access the `Board` factory via:
 
 ```js
 'use strict';
 
-const Board = require('voltrevo-2048/src/Board.js');
+const Board = require('cr-2048/src/Board.js');
 
 const b = Board();
 
