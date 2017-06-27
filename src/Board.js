@@ -129,7 +129,6 @@ const Board = (argInput) => {
         let y = 0;
 
         while (y < filteredRow.length) {
-          console.log("left x:"+x+" y:"+y);
           if (filteredRow[y] === filteredRow[y + 1]) {
             newRow.push(2 * filteredRow[y]);
             y += 2;
