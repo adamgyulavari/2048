@@ -11,6 +11,8 @@ const copyCells = (cells) => (
   cells.map(row => row.map(cell => cell))
 );
 
+const resetCells = () => (range(4).map(() => [0, 0, 0, 0]));
+
 const repeatStr = (str, n) => {
   let result = '';
 
@@ -32,13 +34,18 @@ const Board = (argInput) => {
   // destructuring: ({ x = 1, y = 2 } = {}) => x + y;
   const arg = argInput || {};
   const gameSeed = arg.gameSeed || '';
-  const inputCells = arg.cells || range(4).map(() => [0, 0, 0, 0]);
+  const inputCells = arg.cells || resetCells();
+  let transform = resetCells();
 
   const board = {};
 
   const cells = copyCells(inputCells);
 
   board.getCells = () => copyCells(cells);
+  board.getTransformation = () => copyCells(transform);
+  board.emptyTransformation = () => {
+    transform = resetCells();
+  };
 
   const countEmptyCells = () => {
     let count = 0;
@@ -94,18 +101,35 @@ const Board = (argInput) => {
     range(2).forEach(insertRandomBlock);
   }
 
-  const collapseUp = (get, set) => {
+  const collapseUp = (get, set, setTransform) => {
     let changed = false;
 
     for (let x = 0; x !== 4; x++) {
       const row = range(4).map(y => get(x, y));
       const filteredRow = row.filter(v => v !== 0);
       const newRow = [];
-
+      let transformRow = [0,0,0,0];
+      let v=0, t=0;
+      for (let i = 0; i < 4; i++) {
+        if (row[i] === 0) {
+          t++;
+        } else {
+          if (v === row[i]) {
+            t++;
+            v = row[i]*2;
+          } else {
+            v = row[i];
+          }
+          transformRow[i] = t;
+          t = (t>0 ? t : 0);
+        }
+      }
+      transformRow.forEach((t, y) => setTransform(x, y, t));
       (() => {
         let y = 0;
 
         while (y < filteredRow.length) {
+          console.log("left x:"+x+" y:"+y);
           if (filteredRow[y] === filteredRow[y + 1]) {
             newRow.push(2 * filteredRow[y]);
             y += 2;
@@ -133,7 +157,8 @@ const Board = (argInput) => {
   board.left = () => (
     collapseUp(
       (x, y) => cells[y][x],
-      (x, y, v) => { cells[y][x] = v; }
+      (x, y, v) => { cells[y][x] = v; },
+      (x, y, t) => { transform[y][x] -= t; }
     ) &&
     insertRandomBlock()
   );
@@ -141,7 +166,8 @@ const Board = (argInput) => {
   board.right = () => (
     collapseUp(
       (x, y) => cells[3 - y][x],
-      (x, y, v) => { cells[3 - y][x] = v; }
+      (x, y, v) => { cells[3 - y][x] = v; },
+      (x, y, t) => { transform[3 - y][x] += t; }
     ) &&
     insertRandomBlock()
   );
@@ -149,7 +175,8 @@ const Board = (argInput) => {
   board.up = () => (
     collapseUp(
       (x, y) => cells[x][y],
-      (x, y, v) => { cells[x][y] = v; }
+      (x, y, v) => { cells[x][y] = v; },
+      (x, y, t) => { transform[x][y] -= t; }
     ) &&
     insertRandomBlock()
   );
@@ -157,21 +184,13 @@ const Board = (argInput) => {
   board.down = () => (
     collapseUp(
       (x, y) => cells[x][3 - y],
-      (x, y, v) => { cells[x][3 - y] = v; }
+      (x, y, v) => { cells[x][3 - y] = v; },
+      (x, y, t) => { transform[x][3 - y] += t; }
     ) &&
     insertRandomBlock()
   );
 
   board.clone = () => Board({ gameSeed, cells });
-
-  ['Left', 'Right', 'Up', 'Down'].forEach(direction => {
-    board[`clone${direction}`] = () => {
-      const newBoard = board.clone();
-      const success = newBoard[direction.toLowerCase()]();
-
-      return success ? newBoard : null;
-    };
-  });
 
   board.prettyString = () => {
     const maxLen = (Array.prototype.concat.apply([], cells)
@@ -197,20 +216,6 @@ const Board = (argInput) => {
     result += horizBorder;
 
     return result;
-  };
-
-  board.isEqualTo = (otherBoard) => {
-    const otherCells = otherBoard.getCells();
-
-    for (let y = 0; y !== 4; y++) {
-      for (let x = 0; x !== 4; x++) {
-        if (cells[x][y] !== otherCells[x][y]) {
-          return false;
-        }
-      }
-    }
-
-    return true;
   };
 
   return board;
